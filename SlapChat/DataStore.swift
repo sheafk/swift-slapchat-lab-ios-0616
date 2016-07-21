@@ -13,6 +13,7 @@ class DataStore {
     
 
     static let sharedDataStore = DataStore()
+    var messages = [Message]()
     
     
     // MARK: - Core Data Saving support
@@ -21,6 +22,7 @@ class DataStore {
         if managedObjectContext.hasChanges {
             do {
                 try managedObjectContext.save()
+                
             } catch {
                 // Replace this implementation with code to handle the error appropriately.
                 // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
@@ -31,10 +33,46 @@ class DataStore {
         }
     }
     
-//        func fetchData ()
-//        {
-//         perform a fetch request to fill an array property on your datastore
-//        }
+    func fetchData () {
+            let messageFetch = NSFetchRequest(entityName: "Message")
+            
+            let createdAtSort = NSSortDescriptor(key: "createdAt", ascending: true)
+            messageFetch.sortDescriptors = [createdAtSort]
+            
+            do {
+                
+                messages = try self.managedObjectContext.executeFetchRequest(messageFetch) as! [Message]
+                
+                //add messages to array
+            } catch {
+                print("Fetch does not work")
+            }
+            
+            if messages.count == 0 {
+                generateTestData()
+            }
+    }
+    
+    func generateTestData() {
+        
+        var message1 = NSEntityDescription.insertNewObjectForEntityForName("Message", inManagedObjectContext: self.managedObjectContext) as! Message
+        
+        message1.content = "You are on!"
+        message1.createdAt = NSDate()
+        
+        var message2 = NSEntityDescription.insertNewObjectForEntityForName("Message", inManagedObjectContext: self.managedObjectContext) as! Message
+        
+        message2.content = "AMAZING!"
+        message2.createdAt = NSDate()
+        
+        var message3 = NSEntityDescription.insertNewObjectForEntityForName("Message", inManagedObjectContext: self.managedObjectContext) as! Message
+        
+        message3.content = "Have a wonderful day."
+        message3.createdAt = NSDate()
+        
+        saveContext()
+        fetchData()
+    }
 
     // MARK: - Core Data stack
     // Managed Object Context property getter. This is where we've dropped our "boilerplate" code.
@@ -50,7 +88,7 @@ class DataStore {
     
     lazy var managedObjectModel: NSManagedObjectModel = {
         // The managed object model for the application. This property is not optional. It is a fatal error for the application not to be able to find and load its model.
-        let modelURL = NSBundle.mainBundle().URLForResource("<#XCDATAMODELD_NAME#>", withExtension: "momd")!
+        let modelURL = NSBundle.mainBundle().URLForResource("slapChat", withExtension: "momd")!
         return NSManagedObjectModel(contentsOfURL: modelURL)!
     }()
     
@@ -58,7 +96,7 @@ class DataStore {
         // The persistent store coordinator for the application. This implementation creates and returns a coordinator, having added the store for the application to it. This property is optional since there are legitimate error conditions that could cause the creation of the store to fail.
         // Create the coordinator and store
         let coordinator = NSPersistentStoreCoordinator(managedObjectModel: self.managedObjectModel)
-        let url = self.applicationDocumentsDirectory.URLByAppendingPathComponent("SingleViewCoreData.sqlite")
+        let url = self.applicationDocumentsDirectory.URLByAppendingPathComponent("slapChat.sqlite")
         var failureReason = "There was an error creating or loading the application's saved data."
         do {
             try coordinator.addPersistentStoreWithType(NSSQLiteStoreType, configuration: nil, URL: url, options: nil)
